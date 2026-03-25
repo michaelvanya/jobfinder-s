@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 const GlobalContext = createContext();
 
-axios.defaults.baseURL = "https://jobfindr-q1cl.onrender.com";
+axios.defaults.baseURL = "https://jobfinder-mze7.onrender.com";
 axios.defaults.withCredentials = true;
 
 export const GlobalContextProvider = ({ children }) => {
