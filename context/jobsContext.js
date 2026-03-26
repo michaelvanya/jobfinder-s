@@ -11,7 +11,7 @@ axios.defaults.baseURL = "https://jobfinder-mze7.onrender.com";
 axios.defaults.withCredentials = true;
 
 export const JobsContextProvider = ({ children }) => {
-  const { userProfile, getUserProfile } = useGlobalContext();
+  const { userProfile } = useGlobalContext(); // ✅ removed getUserProfile — doesn't belong here
   const router = useRouter();
 
   const [jobs, setJobs] = useState([]);
@@ -42,7 +42,7 @@ export const JobsContextProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await axios.get("/api/v1/jobs");
-      setJobs(res.data);
+      setJobs(res.data ?? []); // ✅ fallback to empty array if null
     } catch (error) {
       console.log("Error getting jobs", error);
     } finally {
@@ -53,6 +53,8 @@ export const JobsContextProvider = ({ children }) => {
   const createJob = async (jobData) => {
     try {
       const res = await axios.post("/api/v1/jobs", jobData);
+
+      if (!res.data) return; // ✅ guard against null response
 
       toast.success("Job created successfully");
       setJobs((prevJobs) => [res.data, ...prevJobs]);
@@ -66,14 +68,16 @@ export const JobsContextProvider = ({ children }) => {
       router.push(`/job/${res.data._id}`);
     } catch (error) {
       console.log("Error creating job", error);
+      toast.error(error?.response?.data?.message || "Failed to create job");
     }
   };
 
   const getUserJobs = async (userId) => {
+    if (!userId) return; // ✅ guard against undefined/null userId
     setLoading(true);
     try {
       const res = await axios.get("/api/v1/jobs/user/" + userId);
-      setUserJobs(res.data);
+      setUserJobs(res.data ?? []); // ✅ fallback to empty array if null
     } catch (error) {
       console.log("Error getting user jobs", error);
     } finally {
@@ -90,7 +94,7 @@ export const JobsContextProvider = ({ children }) => {
       if (title) query.append("title", title);
 
       const res = await axios.get(`/api/v1/jobs/search?${query.toString()}`);
-      setJobs(res.data);
+      setJobs(res.data ?? []); // ✅ fallback to empty array if null
     } catch (error) {
       console.log("Error searching jobs", error);
     } finally {
@@ -99,31 +103,37 @@ export const JobsContextProvider = ({ children }) => {
   };
 
   const getJobById = async (id) => {
+    if (!id) return null; // ✅ guard against undefined/null id
     setLoading(true);
     try {
       const res = await axios.get(`/api/v1/jobs/${id}`);
-      return res.data;
+      return res.data ?? null;
     } catch (error) {
       console.log("Error getting job by id", error);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
   const likeJob = async (jobId) => {
+    if (!jobId) return; // ✅ guard
     try {
       await axios.put(`/api/v1/jobs/like/${jobId}`);
       toast.success("Job liked successfully");
       getJobs();
     } catch (error) {
       console.log("Error liking job", error);
+      toast.error(error?.response?.data?.message || "Failed to like job");
     }
   };
 
   const applyToJob = async (jobId) => {
+    if (!jobId) return; // ✅ guard
+
     const job = jobs.find((job) => job._id === jobId);
 
-    if (job && userProfile?._id && job.applicants.includes(userProfile._id)) {
+    if (job && userProfile?._id && job.applicants?.includes(userProfile._id)) { // ✅ optional chain applicants
       toast.error("You have already applied to this job");
       return;
     }
@@ -139,6 +149,7 @@ export const JobsContextProvider = ({ children }) => {
   };
 
   const deleteJob = async (jobId) => {
+    if (!jobId) return; // ✅ guard
     try {
       await axios.delete(`/api/v1/jobs/${jobId}`);
       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
@@ -146,6 +157,7 @@ export const JobsContextProvider = ({ children }) => {
       toast.success("Job deleted successfully");
     } catch (error) {
       console.log("Error deleting job", error);
+      toast.error(error?.response?.data?.message || "Failed to delete job");
     }
   };
 
@@ -164,9 +176,9 @@ export const JobsContextProvider = ({ children }) => {
   useEffect(() => {
     if (userProfile?._id) {
       getUserJobs(userProfile._id);
-      if (userProfile.auth0Id) getUserProfile(userProfile.auth0Id);
+      // ✅ removed getUserProfile() call — was causing re-render loop and null crash
     }
-  }, [userProfile]);
+  }, [userProfile?._id]); // ✅ depend on _id only, not the whole object — prevents unnecessary re-renders
 
   return (
     <JobsContext.Provider
