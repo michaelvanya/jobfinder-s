@@ -23,7 +23,6 @@ function JobCard({ job, activeJob }: JobProps) {
 
   const {
     title,
-
     salaryType,
     salary,
     createdBy,
@@ -32,7 +31,8 @@ function JobCard({ job, activeJob }: JobProps) {
     createdAt,
   } = job;
 
-  const { name, profilePicture } = createdBy;
+  // Guard against null/undefined createdBy
+  const { name, profilePicture } = createdBy ?? {};
 
   const router = useRouter();
 
@@ -90,7 +90,7 @@ function JobCard({ job, activeJob }: JobProps) {
           <div className="flex flex-col gap-1">
             <h4 className="group-hover:underline font-bold">{title}</h4>
             <p className="text-xs">
-              {name}: {applicants.length}{" "}
+              {name ?? "Unknown"}: {applicants.length}{" "}
               {applicants.length > 1 ? "Applicants" : "Applicant"}
             </p>
           </div>
@@ -103,7 +103,7 @@ function JobCard({ job, activeJob }: JobProps) {
           onClick={() => {
             isAuthenticated
               ? handleLike(job._id)
-              : router.push("https://jobfindr-q1cl.onrender.com/login");
+              : router.push("http://localhost:5000/login");
           }}
         >
           {isLiked ? bookmark : bookmarkEmpty}
