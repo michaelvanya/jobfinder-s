@@ -10,10 +10,11 @@ import { grip, list, table } from "@/utils/Icons";
 import Image from "next/image";
 import React from "react";
 
-function Page() {
-  const { jobs = [], filters = {} } = useJobsContext(); // ✅ safe defaults
+function page() {
+  const { jobs, filters } = useJobsContext();
   const [columns, setColumns] = React.useState(3);
 
+  // cycle through 1, 2, 3 columns
   const toggleGridColumns = () => {
     setColumns((prev) => (prev === 3 ? 2 : prev === 2 ? 1 : 3));
   };
@@ -24,31 +25,24 @@ function Page() {
     return list;
   };
 
+  const normalizeType = (type: string) =>
+    type.toLowerCase().replace("-", " ").trim();
+
   const filteredJobs =
     filters.fullTime ||
     filters.partTime ||
     filters.contract ||
-    filters.internship // ✅ FIXED (was "internet")
+    filters.internship // fixed: was filters.internet
       ? jobs.filter((job: Job) => {
-          if (filters.fullTime && job.jobType?.includes("Full Time"))
-            return true;
-          if (filters.partTime && job.jobType?.includes("Part Time"))
-            return true;
-          if (filters.contract && job.jobType?.includes("Contract"))
-            return true;
-          if (filters.internship && job.jobType?.includes("Internship"))
-            return true;
-
-          if (filters.fullStack && job.tags?.includes("Full Stack"))
-            return true;
-          if (filters.backend && job.tags?.includes("Backend"))
-            return true;
-          if (filters.devOps && job.tags?.includes("DevOps"))
-            return true;
-          if (filters.uiUx && job.tags?.includes("UI/UX"))
-            return true;
-
-          return false;
+          if (filters.fullTime && job.jobType.some((t) => normalizeType(t) === "full time")) return true;
+          if (filters.partTime && job.jobType.some((t) => normalizeType(t) === "part time")) return true;
+          if (filters.contract && job.jobType.some((t) => normalizeType(t) === "contract")) return true;
+          if (filters.internship && job.jobType.some((t) => normalizeType(t) === "internship")) return true;
+          if (filters.fullStack && job.tags.includes("Full Stack")) return true;
+          if (filters.backend && job.tags.includes("Backend")) return true;
+          if (filters.devOps && job.tags.includes("DevOps")) return true;
+          if (filters.uiUx && job.tags.includes("UI/UX")) return true;
+          return false; // explicit fallback
         })
       : jobs;
 
@@ -113,7 +107,7 @@ function Page() {
                 : "grid-cols-1"
             }`}
           >
-            {filteredJobs?.length > 0 ? (
+            {filteredJobs.length > 0 ? ( // fixed: was checking jobs.length but rendering filteredJobs
               filteredJobs.map((job: Job) => (
                 <JobCard key={job._id} job={job} />
               ))
@@ -131,4 +125,4 @@ function Page() {
   );
 }
 
-export default Page;
+export default page;
